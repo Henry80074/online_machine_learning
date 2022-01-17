@@ -87,7 +87,7 @@ print(trainPredict1)
 ind = [i for i in range(training_data_len-n_future, training_data_len)]
 # issue withe the index of new datafram overlapping
 new_df = df.filter(["PRICE"])
-new_df2 = pd.DataFrame({"index": ind , "PRICE":trainPredict1})
+new_df2 = pd.DataFrame({"index": ind , "PRICE":trainPredict1}, allow_2d=True)
 
 # last_60_days_scaled = scaler.transform(last_60_days)
 #

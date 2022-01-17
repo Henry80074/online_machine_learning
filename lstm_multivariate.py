@@ -24,23 +24,21 @@ df.to_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\data.csv")
 
 #create new df with only price - only parameter
 dfp = pd.read_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\data.csv")
-price = dfp['price']
-price = df.filter(['price'])
+price = dfp.filter(['price', 'value'])
+
+#preprocess data to scale
 scaler = StandardScaler()
 scaler = scaler.fit(price)
 price = scaler.transform(price)
-#price = scaler.fit_transform(price)
-training_data_len = math.ceil(len(df)) #* 0.8)
-print(training_data_len)
 
 # convert an array of values into a dataset matrix
 
 #price = scaler.fit_transform(price)
-def create_dataset(dataset, look_back=14):
+def create_dataset(dataset, look_back):
     df_as_np = dataset
     dataX, dataY = [], []
     for i in range(len(dataset) - look_back):
-        row = [a for a in df_as_np[i:i+look_back]]
+        row = [r for r in df_as_np[i:i+look_back]]
         dataX.append(row)
         label = df_as_np[i+look_back]
         dataY.append(label)
@@ -51,6 +49,8 @@ def create_dataset(dataset, look_back=14):
 # scaled_data = scaler.fit_transform(dataset)
 
 # # split into train and test sets
+# training_data_len = math.ceil(len(df)) #* 0.8)
+# print(training_data_len)
 train_size = int(len(price) * 0.8)
 val_size = int(len(price) * 0.9)
 test_size = len(price)
@@ -75,10 +75,10 @@ print('############################')
 
 def create_model(look_back):
     model = Sequential()
-    model.add(LSTM(25, return_sequences=True, input_shape=(look_back, 1)))
+    model.add(LSTM(25, return_sequences=True, input_shape=(look_back, 2)))
     model.add(LSTM(8, return_sequences=False))
     model.add(keras.layers.Dropout(0.2))
-    model.add(Dense(1))
+    model.add(Dense(2))
 
     model.compile(optimizer=Adam(learning_rate=0.0001), loss=MeanSquaredError())
     return model
@@ -95,37 +95,26 @@ except (IOError):
 # make predictions
 trainPredict = model.predict(X_train)
 #get shape required for np array
-trainPredictScaled = scaler.inverse_transform(trainPredict).flatten()
-Y_testScaled = scaler.inverse_transform(Y_train).flatten()
+trainPredictScaled = scaler.inverse_transform(trainPredict)
+Y_testScaled = scaler.inverse_transform(Y_train)
 # get predictions into true values
 results = np.array([trainPredictScaled, Y_testScaled])
-trainResults = pd.DataFrame(data={'predictions': list(trainPredictScaled), 'Actuals':Y_testScaled}, columns=["predictions", "Actuals"])
-
+#get predicted and actual price
+trainResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in Y_testScaled]}, columns=["predictions", "Actuals"])
+#plot price
 plt.plot(trainResults)
 
 features = 1
-# Get something which has as many features as dataset
-trainPredict_extended = np.zeros((len(trainPredict), features))
-# Put the predictions there
-trainPredict_extended[:,1] = trainPredict[:,0]
-# Inverse transform it and select the 3rd column.
-trainPredict = scaler.inverse_transform(trainPredict_extended) [:,1]
-print(trainPredict)
-# Get something which has as many features as dataset
-testPredict_extended = np.zeros((len(trainPredict),2))
-# Put the predictions there
-testPredict_extended[:,1] = trainPredict[:,0]
-# Inverse transform it and select the 3rd column.
-testPredict = scaler.inverse_transform(testPredict_extended)[:,1]
-
-#
-# trainY_extended = np.zeros((len(trainY),2))
-# trainY_extended[:,1]=trainY
-# trainY=scaler.inverse_transform(trainY_extended)[:,1]
-#
-#
-# testY_extended = np.zeros((len(testY),2))
-# testY_extended[:,1]=testY
-# testY=scaler.inverse_transform(testY_extended)[:,1]
-
-
+# # Get something which has as many features as dataset
+# trainPredict_extended = np.zeros((len(trainPredict), features))
+# # Put the predictions there
+# trainPredict_extended[:,1] = trainPredict[:,0]
+# # Inverse transform it and select the 3rd column.
+# trainPredict = scaler.inverse_transform(trainPredict_extended) [:,1]
+# print(trainPredict)
+# # Get something which has as many features as dataset
+# testPredict_extended = np.zeros((len(trainPredict),2))
+# # Put the predictions there
+# testPredict_extended[:,1] = trainPredict[:,0]
+# # Inverse transform it and select the 3rd column.
+# testPredict = scaler.inverse_transform(testPredict_extended)[:,1]
