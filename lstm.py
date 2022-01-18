@@ -15,12 +15,12 @@ df.to_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\data.csv")
 
 # plt.figure(figsize=(16,8))
 # plt.title('price')
-# plt.plot(df['PRICE'])
+# plt.plot(dfnew['PRICE'])
 # plt.xlabel('Date')
 # plt.ylabel('price')
 # plt.show()
 
-#create new df with only price - only parameter
+#create new dfnew with only price - only parameter
 
 data = df.filter(['PRICE', 'value'])
 

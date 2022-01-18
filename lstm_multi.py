@@ -22,8 +22,8 @@ print(df.head())
 
 df.to_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\data.csv")
 
-#create new df with only price - only parameter
-dfp = pd.read_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\data.csv")
+#create new dfnew with only price - only parameter
+dfp = pd.read_csv(r"/dataold.csv")
 price = dfp['price']
 price = df.filter(['price'])
 scaler = StandardScaler()
