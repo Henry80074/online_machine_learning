@@ -2,51 +2,44 @@ from lstm_multivariate import get_data, preprocess, create_dataset, split, creat
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import keras.models
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import MeanSquaredError
 
 dataframe, new_entries = get_data()
 dataframe = dataframe.filter(['price', 'value'])
 
 dataframe, scaler = preprocess(dataframe)
-look_back = 90
-future = 7
+look_back = 14
 variables = 2
 X, Y = create_dataset(dataframe, look_back)
 
-print(X.shape, Y.shape)
-
-#split data, separate.
-train_size, val_size, test_size = split(dataframe)
-X_train, Y_train = X[:train_size], Y[:train_size]
-X_val, Y_val = X[train_size: val_size], Y[train_size: val_size]
-X_test, Y_test = X[val_size:test_size], Y[val_size:test_size]
-
-#shapes of data
-print("np.array(y_train).shape=",Y_train.shape)
-print("np.array(y_val).shape=",Y_val.shape)
-print("np.array(y_test).shape=",Y_test.shape)
-print("np.array(x_train).shape=",X_train.shape)
-print("np.array(x_val).shape=",X_val.shape)
-print("np.array(x_test).shape=",X_test.shape)
-print('############################')
-
 model = load()
-#model = create(look_back, variables, X_train, Y_train, X_val, Y_val)
-# make predictions
-trainPredict = model.predict(X)
-valPredict = model.predict(X_val)
-testPredict = model.predict(X_test)
-# get predictions into true values
-trainPredictScaled = scaler.inverse_transform(trainPredict)
-trainActual = scaler.inverse_transform(Y)
-valActual = scaler.inverse_transform(Y_val)
-testActual = scaler.inverse_transform(Y_test)
+#
+days = 101
+last_batch  = X[-days:-days+1]
+for x in last_batch:
+    print(x)
 
+current = last_batch[0]
+results = []
+future_predict = 100
+for i in range(future_predict):
+    trainPredict = model.predict(last_batch)
+    trainPredictScaled = scaler.inverse_transform(trainPredict)
+    results.append(trainPredictScaled[0])
+    current = np.append(current, trainPredict, axis=0)
+    current = np.delete(current, [0], axis=0)
+    last_batch = np.array([current])
 
-#get results as numpy array
-results = np.array([trainPredict, trainActual])
-#get predicted and actual price
-trainResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in trainActual]}, columns=["predictions", "Actuals"])
-#plot price
+#
+# #get results as numpy array
+results = np.array(results)
+# #get predicted and actual price
+trainResults = pd.DataFrame(data={'predictions': [col[0] for col in results]}, columns=["predictions"])
+#plot price_predictions
 plt.plot(trainResults)
 plt.show()
 plt.show()
