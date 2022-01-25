@@ -58,7 +58,7 @@ def load():
 def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         model = create_model(look_back, variables)
         # train model
-        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=10)
+        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=50)
         model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
         return model
 

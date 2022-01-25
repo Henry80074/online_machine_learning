@@ -1,3 +1,4 @@
+from init import init
 from lstm_multivariate import get_data, preprocess, create_dataset, split, create, load
 import numpy as np
 import pandas as pd
@@ -12,20 +13,20 @@ dataframe, new_entries = get_data()
 dataframe = dataframe.filter(['price', 'value'])
 
 dataframe, scaler = preprocess(dataframe)
-look_back = 14
+look_back = 45
 variables = 2
 X, Y = create_dataset(dataframe, look_back)
 
 model = load()
-#
-days = 101
-last_batch  = X[-days:-days+1]
+#makes prediction for 1 batch and plots it
+days = 1
+last_batch = X[-days:]
 for x in last_batch:
     print(x)
-
+print(scaler.inverse_transform(last_batch[0]))
 current = last_batch[0]
 results = []
-future_predict = 100
+future_predict = 14
 for i in range(future_predict):
     trainPredict = model.predict(last_batch)
     trainPredictScaled = scaler.inverse_transform(trainPredict)
@@ -38,11 +39,15 @@ for i in range(future_predict):
 # #get results as numpy array
 results = np.array(results)
 # #get predicted and actual price
-trainResults = pd.DataFrame(data={'predictions': [col[0] for col in results]}, columns=["predictions"])
+futurePredict = pd.DataFrame(data={'predictions': [col[0] for col in results]}, columns=["predictions"])
 #plot price_predictions
-plt.plot(trainResults)
+plt.plot(futurePredict)
+
+
+fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
+#get predicted and actual price
+fullResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in trainActual]}, columns=["predictions", "Actuals"])
+#plot price
+plt.plot(fullResults)
+
 plt.show()
-plt.show()
-
-
-
