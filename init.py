@@ -49,13 +49,13 @@ def init():
     return trainPredictScaled, valPredict, testPredict, trainActual, valActual, testActual
 
 
-trainPredictScaled, valPredict, testPredict, trainActual, valActual, testActual = init()
-#get predicted and actual price
-trainResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in trainActual]}, columns=["predictions", "Actuals"])
-#plot price
-plt.plot(trainResults)
-plt.show()
-plt.show()
+# trainPredictScaled, valPredict, testPredict, trainActual, valActual, testActual = init()
+# #get predicted and actual price
+# trainResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in trainActual]}, columns=["predictions", "Actuals"])
+# #plot price
+# plt.plot(trainResults)
+# plt.show()
+# plt.show()
 
 
 
