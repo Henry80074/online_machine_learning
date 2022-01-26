@@ -1,23 +1,10 @@
 from init import init
-from lstm_multivariate import get_data, preprocess, create_dataset, split, create, load
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import keras.models
-from keras.models import Sequential
-from keras.layers import Dense, LSTM
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import MeanSquaredError
 
-dataframe, new_entries = get_data()
-dataframe = dataframe.filter(['price', 'value'])
 
-dataframe, scaler = preprocess(dataframe)
-look_back = 45
-variables = 2
-X, Y = create_dataset(dataframe, look_back)
 
-model = load()
 #*********************************************
 # #makes prediction for 1 batch and plots it
 # days = 14
@@ -57,39 +44,43 @@ model = load()
 #plt.show()
 #*********************************************
 
+
 #makes prediction for multiple batch and plots it
+#function to plot future predictions, requires the model, X_values (unscaled),Y values (scaled)
+def plot_rolling_predicitons(model, X_values, ActualScaled, PredictScaled, scaler):
+    days_to_predict = 14
+    predictions_list = []
+    #steps through the dataframe and predicts the number of days forward, from the current batch
+    for i in range(0, len(X_values), days_to_predict):
+        last_batch = X_values[i:i+1]
+        #removes unnecessary brackets
+        current = last_batch[0]
+        results = []
+        #make predictions on the last batch
+        for i in range(days_to_predict):
+            trainPredict = model.predict(last_batch)
+            trainPredictScaled = scaler.inverse_transform(trainPredict)
+            results.append(trainPredictScaled[0].tolist())
+            # creates np.array of batch and prediction, removes first item from array
+            current = np.append(current, trainPredict, axis=0)
+            current = np.delete(current, [0], axis=0)
+            last_batch = np.array([current])
+        #get results as numpy array
+        for i in results:
+            predictions_list.append(i)
+    futurePredict = pd.DataFrame(predictions_list)
+    n = 0
+    price_column = futurePredict.iloc[: , :1]
 
-days_to_predict = 14
-predictions_list = []
-#steps through the dataframe and predicts the number of days forward, from the current batch
-for i in range(0, (len(dataframe)-look_back), days_to_predict):
-    last_batch = X[i:i+1]
-    #removes unnecessary brackets
-    current = last_batch[0]
-    results = []
-    #make predictions on the last batch
-    for i in range(days_to_predict):
-        trainPredict = model.predict(last_batch)
-        trainPredictScaled = scaler.inverse_transform(trainPredict)
-        results.append(trainPredictScaled[0].tolist())
-        # creates np.array of batch and prediction, removes first item from array
-        current = np.append(current, trainPredict, axis=0)
-        current = np.delete(current, [0], axis=0)
-        last_batch = np.array([current])
-    #get results as numpy array
-    for i in results:
-        predictions_list.append(i)
+    #fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
+    #get predicted and actual price
+    fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'Actuals':[col[0] for col in ActualScaled]}, columns=["predictions", "Actuals"])
 
-futurePredict = pd.DataFrame(predictions_list)
-n = 0
-price_column = futurePredict.iloc[: , :1]
+    data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
+    plt.plot(data)
+    plt.show()
 
-fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
-#get predicted and actual price
-fullResults = pd.DataFrame(data={'predictions': [col[0] for col in fullTrainPredictScaled], 'Actuals':[col[0] for col in fullTrainActual]}, columns=["predictions", "Actuals"])
+X, Y, ActualScaled, PredictScaled, model, scaler= init()
 
-new = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
-
-plt.plot(new)
-plt.show()
+plot_rolling_predicitons(model, X, ActualScaled, PredictScaled, scaler)
 plt.show()

@@ -35,20 +35,20 @@ def init():
     #model = create(look_back, variables, X_train, Y_train, X_val, Y_val)
     # make predictions
     trainPredict = model.predict(X)
-    valPredict = model.predict(X_val)
-    testPredict = model.predict(X_test)
+    # valPredict = model.predict(X_val)
+    # testPredict = model.predict(X_test)
     # get predictions into true values
-    trainPredictScaled = scaler.inverse_transform(trainPredict)
-    trainActual = scaler.inverse_transform(Y)
-    valActual = scaler.inverse_transform(Y_val)
-    testActual = scaler.inverse_transform(Y_test)
+    PredictScaled = scaler.inverse_transform(trainPredict)
+    ActualScaled = scaler.inverse_transform(Y)
+    # valActual = scaler.inverse_transform(Y_val)
+    # testActual = scaler.inverse_transform(Y_test)
 
 
     #get results as numpy array
-    results = np.array([trainPredict, trainActual])
-    return trainPredictScaled, valPredict, testPredict, trainActual, valActual, testActual
+    #results = np.array([trainPredict, trainActual])
+    return X, Y, PredictScaled,ActualScaled, model, scaler
 
-
+## plots the data and predictions
 # trainPredictScaled, valPredict, testPredict, trainActual, valActual, testActual = init()
 # #get predicted and actual price
 # trainResults = pd.DataFrame(data={'predictions': [col[0] for col in trainPredictScaled], 'Actuals':[col[0] for col in trainActual]}, columns=["predictions", "Actuals"])
