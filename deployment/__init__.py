@@ -1,8 +1,8 @@
 import pickle
 from flask import Flask
+from tensorflow import keras
 
 app = Flask(__name__)
-#with open(r'C:\Users\3henr\PycharmProjects\FinanceML\saved_model.pb') as file:
-   # model = pickle.load(file)
+model = keras.models.load_model('..\FinanceML')
 
 from deployment import routes

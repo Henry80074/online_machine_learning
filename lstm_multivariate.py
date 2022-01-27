@@ -34,6 +34,7 @@ def connect_and_fetch():
    return df
 
 
+#renaming?
 def get_data():
     dfnew = connect_and_fetch()
     dfnew.to_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\datanew.csv")

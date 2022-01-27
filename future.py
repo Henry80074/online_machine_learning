@@ -44,6 +44,7 @@ import matplotlib.pyplot as plt
 #plt.show()
 #*********************************************
 
+#consider pickling this object to load again with ease/??
 
 #makes prediction for multiple batch and plots it
 #function to plot future predictions, requires the model, X_values (unscaled),Y values (scaled)
