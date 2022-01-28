@@ -16,10 +16,10 @@
 	<h1>Machine Learning Deployment</h1>
 
      <!-- Main Input For Receiving Query to our ML -->
-    <form action="{{ url_for('predict')}}"method="post">
-    	<input type="text" name="days" placeholder="number_days_in_past" required="required" />
+    <form action="{{ url_for('predict_one')}}"method="post">
+    	<input type="text" name="days" placeholder="number of days in the past" required="required" />
         <input type="text" name="future" placeholder="window" required="required" />
-        <button type="submit" class="btn btn-primary btn-block btn-large">Predict sales in third month</button>
+        <button type="submit" class="btn btn-primary btn-block btn-large">Show models predictions</button>
     </form>
 
    <br>

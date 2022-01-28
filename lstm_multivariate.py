@@ -19,7 +19,7 @@ def connect_and_fetch():
 
    #establishing the connection
    conn = psycopg2.connect(
-      database="fear_and_greed", user='postgres', ***REMOVED***='224822', host='127.0.0.1', port= '5432'
+      database="fear_and_greed", user='postgres', ***REMOVED***='***REMOVED***', host='127.0.0.1', port= '5432'
    )
    sql_query = pd.read_sql_query('''
                                   SELECT
