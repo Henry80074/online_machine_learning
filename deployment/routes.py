@@ -42,26 +42,16 @@ def get_all_data():
                                 'total_volumes': [col for col in total_volumes], 'market_cap':[col for col in market_caps]},
                           columns=["date", "prices", "total_volumes", "market_cap"])
     df3 = pd.merge(df2, df1,  how="outer", on=["date"])
-    #df2.set_index('date')
+    # df2.set_index('date')
     df3.dropna(subset=["date", "prices", "total_volumes", "market_cap"], inplace=True)
-    # conn = psycopg2.connect(
-    #     database="fear_and_greed", user='postgres', ***REMOVED***='224822', host='127.0.0.1', port='5432'
-    # )
-    # sql_query = pd.read_sql_query('''
-    #                                  SELECT
-    #                                  *
-    #                                  FROM fear_greed_index
-    #                                  ORDER BY timestamp''', conn)
-    #
-    # df = pd.DataFrame(sql_query, columns=['timestamp', 'value', 'price', 'value_classification'])
-    # # Closing the connection
-    # conn.close()
-
+    # drops last row as this contains the current price of bitcoin
+    # Drop last row
+    df3.drop(index=df3.index[-1],
+            axis=0,
+            inplace=True)
     conn_string = "postgresql://postgres:***REMOVED***@localhost:5432/online_machine_learning"
     db = create_engine(conn_string)
     conn = db.connect()
-
-
     df3.to_sql('bitcoin', con=conn, if_exists='replace', index=False)
 
     return render_template("data.html", tables=[df3.to_html(classes='data')], titles=df3.columns.values)
@@ -95,31 +85,33 @@ def update_one():
                        columns=["date", "prices", "total_volumes", "market_cap"])
     # merge the dataframes
     df3 = pd.merge(df2, df1, how="outer", on=["date"])
-    # post to data base
-    conn_string = "postgresql://postgres:***REMOVED***@localhost:5432/online_machine_learning"
-    db = create_engine(conn_string)
-    conn = db.connect()
-    df3.to_sql('bitcoin', con=conn, if_exists='append', index=False)
+    # connect to the database
+    conn = psycopg2.connect(user="postgres",
+                                  ***REMOVED***="***REMOVED***",
+                                  host="127.0.0.1",
+                                  port="5432",
+                                  database="online_machine_learning")
+    # create cursor
+    cursor = conn.cursor()
+    # post to database
+    # creating column list for insertion
+    cols = ",".join([str(i) for i in df3.columns.tolist()])
+    # Insert DataFrame records one by one.
+    for i, row in df3.iterrows():
+        sql = "INSERT INTO bitcoin (" + cols + ") VALUES (" + "%s," * (len(row) - 1) + "%s) ON CONFLICT ON CONSTRAINT date DO NOTHING"
+        cursor.execute(sql, tuple(row))
+        # commit to save our changes
+        conn.commit()
+    conn.close()
     return render_template("data.html", tables=[df3.to_html(classes='data')], titles=df3.columns.values)
 
-@app.route('/results',methods=['POST'])
-def results():
-
-    data = request.get_json(force=True)
-    prediction = model.predict([np.array(list(data.values()))])
-
-    output = prediction[0]
-    return jsonify(output)
-
-@app.route('/dashboard')
-def dashboard():
-    return "dashboard"
 
 @app.route('/view_data')
 def view_database():
     df = connect_and_fetch()
     return render_template("data.html", tables=[df.to_html(classes='data')], titles=df.columns.values)
 
+@app.route('/increment_model')
 
 @app.route('/predict_one', methods=['POST'])
 def predict_one():
@@ -171,12 +163,8 @@ def predict_one():
         fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y=fortune_teller.columns,
                       title="projected price from %s days ago to %s days ago" % (days, days - future_predict))
 
-
-
     # bitcoin price chart
     fig2 = px.line(Y, x=[i for i in range(len(Y))], y=[col[0] for col in Y])
-
-
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template("prediction.html", tables=[fortune_teller.to_html(classes='data')], titles=df.columns.values, graphJSON=graphJSON, graphJSON2=graphJSON2)

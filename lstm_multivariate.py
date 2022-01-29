@@ -19,15 +19,15 @@ def connect_and_fetch():
 
    #establishing the connection
    conn = psycopg2.connect(
-      database="fear_and_greed", user='postgres', ***REMOVED***='***REMOVED***', host='127.0.0.1', port= '5432'
+      database="online_machine_learning", user='postgres', ***REMOVED***='***REMOVED***', host='127.0.0.1', port= '5432'
    )
    sql_query = pd.read_sql_query('''
                                   SELECT
                                   *
-                                  FROM fear_greed_index
-                                  ORDER BY timestamp''', conn)
+                                  FROM bitcoin
+                                  ''', conn)
 
-   df = pd.DataFrame(sql_query, columns=['timestamp', 'value', 'price', 'value_classification'])
+   df = pd.DataFrame(sql_query, columns=['date', 'prices', 'total_volumes', 'market_cap', 'value'])
 
    #Closing the connection
    conn.close()
