@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt, mpld3
 import pandas as pd
 import pickle
-from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
+from lstm_multivariate import connect_and_fetch, preprocess, create_dataset, get_x_y
 import json
 import plotly
 import plotly.express as px
@@ -112,6 +112,21 @@ def view_database():
     return render_template("data.html", tables=[df.to_html(classes='data')], titles=df.columns.values)
 
 @app.route('/increment_model')
+def increment():
+    df = connect_and_fetch()
+    df = df.filter(['prices', 'value'])
+    df, scalar = preprocess(df)
+    dataX = []
+    dataY = []
+    #window -1, and second to last item
+    X = df[-47:-2]
+    dataX.append([r for r in X])
+    print(dataX)
+    label = df[-1]
+    print(label)
+    dataY.append(label)
+    #model.fit(np.array(dataX), np.array(dataY))
+    return "complete"#render_template("data.html", tables=[X.to_html(classes='data')], titles=X.columns.values, dataY=dataY)
 
 @app.route('/predict_one', methods=['POST'])
 def predict_one():

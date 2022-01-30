@@ -48,6 +48,7 @@ def get_data():
         new_entries = None
     return dfnew, new_entries
 
+
 def load():
     try:
         model = keras.models.load_model(r'C:\Users\3henr\PycharmProjects\FinanceML')
@@ -55,6 +56,7 @@ def load():
         return model
     except IOError:
         return print(("no model found"))
+
 
 def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         model = create_model(look_back, variables)
