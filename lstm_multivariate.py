@@ -7,6 +7,7 @@ import math
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
+from keras.callbacks import ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import RootMeanSquaredError
@@ -40,7 +41,7 @@ def get_data():
     dfnew.to_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\datanew.csv")
     # create new dfnew with only price - only parameter
     try:
-        dfold = pd.read_csv(r"C:\Users\3henr\PycharmProjects\FinanceML\dataold.csv")
+        dfold = pd.read_csv(r"/trash/dataold.csv")
         no_entries = len(dfnew) - len(dfold)
         if no_entries > 0:
             new_entries = dfnew[len(dfold) + 1:]  # gets new entries #to do: index needs shifting 1 back
@@ -61,14 +62,20 @@ def load():
 def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         model = create_model(look_back, variables)
         # train model
-        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=50)
+        model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
+            filepath="/tmp/checkpoint",
+            save_weights_only=True,
+            monitor='val_accuracy',
+            mode='max',
+            save_best_only=True)
+        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=50, callbacks=[model_checkpoint_callback])
         model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
         return model
 
 
 def create_model(look_back, variables):
     model = Sequential()
-    model.add(LSTM(25, return_sequences=True, input_shape=(look_back, 2)))
+    model.add(LSTM(8, return_sequences=True, input_shape=(look_back, 2)))
     model.add(LSTM(25, return_sequences=False))
     model.add(keras.layers.Dropout(0.2))
     model.add(Dense(variables))

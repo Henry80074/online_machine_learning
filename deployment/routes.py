@@ -15,10 +15,128 @@ import plotly.express as px
 import plotly.graph_objects as go
 import requests
 
-@app.route('/')
-def index():
+@app.route('/explore')
+def explore():
     return render_template("index.html")
 
+@app.route('/', methods=['GET'])
+def dashboard():
+    days = 1
+    future_predict = 28
+    df = connect_and_fetch()
+    df = df.filter(['prices', 'value'])
+    dataframe, scaler = preprocess(df)
+    # must be same as model dims
+    look_back = 45
+    X, Y = create_dataset(dataframe, look_back)
+    Y = scaler.inverse_transform(Y)
+    # make predictions
+    if days == 1:
+        last_batch = X[-days:]
+    else:
+        last_batch = X[-days:-days + 1]
+    current = last_batch[0]
+    results = []
+    for i in range(future_predict):
+        predict = model.predict(last_batch)
+        predict_scaled = scaler.inverse_transform(predict)
+        results.append(predict_scaled[0])
+        current = np.append(current, predict, axis=0)
+        current = np.delete(current, [0], axis=0)
+        last_batch = np.array([current])
+    # #get results as numpy array
+    results = np.array(results)
+
+    if days - future_predict < 0:
+        fortune_teller = pd.DataFrame(
+            data={'predictions': [col[0] for col in results]},
+            columns=["predictions"])
+        # predictions from certain day in time to X days into the future
+        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y="predictions",
+                      title="%s days projected price" % future_predict)
+    else:
+        if days - future_predict == 0:
+            actual = Y[-days:]
+
+        if days - future_predict > 0:
+            actual = Y[-days:-days + future_predict]
+
+        fortune_teller = pd.DataFrame(
+            data={'predictions': [col[0] for col in results], 'actual': [col[0] for col in actual]},
+            columns=["predictions", "actual"])
+        # predictions from certain day in time to X days into the future
+        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y=fortune_teller.columns,
+                      title="projected price from %s days ago to %s days ago" % (days, days - future_predict))
+
+    # bitcoin price chart
+    fig2 = px.line(Y, x=[i for i in range(len(Y))], y=[col[0] for col in Y])
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template("prediction.html", graphJSON=graphJSON, graphJSON2=graphJSON2)
+
+
+@app.route('/view_data')
+def view_database():
+    df = connect_and_fetch()
+    return render_template("data.html", tables=[df.to_html(classes='data')], titles=df.columns.values)
+
+
+
+@app.route('/predict_one', methods=['POST'])
+def predict_one():
+    form_values = [int(x) for x in request.form.values()]
+    days = form_values[0]
+    future_predict = form_values[1]
+    df = connect_and_fetch()
+    df = df.filter(['prices', 'value'])
+    dataframe, scaler = preprocess(df)
+    # must be same as model dims
+    look_back = 45
+    X, Y = create_dataset(dataframe, look_back)
+    Y = scaler.inverse_transform(Y)
+    # make predictions
+    if days == 1:
+        last_batch = X[-days:]
+    else:
+        last_batch = X[-days:-days+1]
+    current = last_batch[0]
+    results = []
+    for i in range(future_predict):
+        predict = model.predict(last_batch)
+        predict_scaled = scaler.inverse_transform(predict)
+        results.append(predict_scaled[0])
+        current = np.append(current, predict, axis=0)
+        current = np.delete(current, [0], axis=0)
+        last_batch = np.array([current])
+    # #get results as numpy array
+    results = np.array(results)
+
+    if days - future_predict < 0:
+        fortune_teller = pd.DataFrame(
+            data={'predictions': [col[0] for col in results]},
+            columns=["predictions"])
+        # predictions from certain day in time to X days into the future
+        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y="predictions",
+                      title="%s days projected price" % future_predict)
+    else:
+        if days - future_predict == 0:
+            actual = Y[-days:]
+
+        if days - future_predict > 0:
+            actual = Y[-days:-days+future_predict]
+
+        fortune_teller = pd.DataFrame(
+            data={'predictions': [col[0] for col in results], 'actual': [col[0] for col in actual]},
+            columns=["predictions", "actual"])
+        # predictions from certain day in time to X days into the future
+        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y=fortune_teller.columns,
+                      title="projected price from %s days ago to %s days ago" % (days, days - future_predict))
+
+    # bitcoin price chart
+    fig2 = px.line(Y, x=[i for i in range(len(Y))], y=[col[0] for col in Y])
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template("prediction.html", tables=[fortune_teller.to_html(classes='data')], titles=df.columns.values, graphJSON=graphJSON, graphJSON2=graphJSON2)
 
 @app.route('/get_all_data', methods=['POST', 'GET'])
 def get_all_data():
@@ -43,7 +161,7 @@ def get_all_data():
                           columns=["date", "prices", "total_volumes", "market_cap"])
     df3 = pd.merge(df2, df1,  how="outer", on=["date"])
     # df2.set_index('date')
-    df3.dropna(subset=["date", "prices", "total_volumes", "market_cap"], inplace=True)
+    df3.dropna(subset=["date", "prices", "total_volumes", "market_cap", "value"], inplace=True)
     # drops last row as this contains the current price of bitcoin
     # Drop last row
     df3.drop(index=df3.index[-1],
@@ -104,82 +222,3 @@ def update_one():
         conn.commit()
     conn.close()
     return render_template("data.html", tables=[df3.to_html(classes='data')], titles=df3.columns.values)
-
-
-@app.route('/view_data')
-def view_database():
-    df = connect_and_fetch()
-    return render_template("data.html", tables=[df.to_html(classes='data')], titles=df.columns.values)
-
-@app.route('/increment_model')
-def increment():
-    df = connect_and_fetch()
-    df = df.filter(['prices', 'value'])
-    df, scalar = preprocess(df)
-    dataX = []
-    dataY = []
-    #window -1, and second to last item
-    X = df[-47:-2]
-    dataX.append([r for r in X])
-    print(dataX)
-    label = df[-1]
-    print(label)
-    dataY.append(label)
-    #model.fit(np.array(dataX), np.array(dataY))
-    return "complete"#render_template("data.html", tables=[X.to_html(classes='data')], titles=X.columns.values, dataY=dataY)
-
-@app.route('/predict_one', methods=['POST'])
-def predict_one():
-    form_values = [int(x) for x in request.form.values()]
-    days = form_values[0]
-    future_predict = form_values[1]
-    df = connect_and_fetch()
-    df = df.filter(['price', 'value'])
-    dataframe, scaler = preprocess(df)
-    # must be same as model dims
-    look_back = 45
-    X, Y = create_dataset(dataframe, look_back)
-    Y = scaler.inverse_transform(Y)
-    # make predictions
-    if days == 1:
-        last_batch = X[-days:]
-    else:
-        last_batch = X[-days:-days+1]
-    current = last_batch[0]
-    results = []
-    for i in range(future_predict):
-        predict = model.predict(last_batch)
-        predict_scaled = scaler.inverse_transform(predict)
-        results.append(predict_scaled[0])
-        current = np.append(current, predict, axis=0)
-        current = np.delete(current, [0], axis=0)
-        last_batch = np.array([current])
-    # #get results as numpy array
-    results = np.array(results)
-
-    if days - future_predict < 0:
-        fortune_teller = pd.DataFrame(
-            data={'predictions': [col[0] for col in results]},
-            columns=["predictions"])
-        # predictions from certain day in time to X days into the future
-        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y="predictions",
-                      title="%s days projected price" % future_predict)
-    else:
-        if days - future_predict == 0:
-            actual = Y[-days:]
-
-        if days - future_predict > 0:
-            actual = Y[-days:-days+future_predict]
-
-        fortune_teller = pd.DataFrame(
-            data={'predictions': [col[0] for col in results], 'actual': [col[0] for col in actual]},
-            columns=["predictions", "actual"])
-        # predictions from certain day in time to X days into the future
-        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y=fortune_teller.columns,
-                      title="projected price from %s days ago to %s days ago" % (days, days - future_predict))
-
-    # bitcoin price chart
-    fig2 = px.line(Y, x=[i for i in range(len(Y))], y=[col[0] for col in Y])
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
-    return render_template("prediction.html", tables=[fortune_teller.to_html(classes='data')], titles=df.columns.values, graphJSON=graphJSON, graphJSON2=graphJSON2)
