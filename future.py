@@ -1,4 +1,9 @@
-from init import init
+import os
+import pickle
+import shutil
+from datetime import date
+
+from lstm_multivariate import init
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,6 +13,7 @@ import matplotlib.pyplot as plt
 def plot_rolling_predicitons(model, X_values, ActualScaled, PredictScaled, scaler):
     days_to_predict = 14
     predictions_list = []
+
     #steps through the dataframe and predicts the number of days forward, from the current batch
     for i in range(0, len(X_values), days_to_predict):
         last_batch = X_values[i:i+1]
@@ -35,10 +41,20 @@ def plot_rolling_predicitons(model, X_values, ActualScaled, PredictScaled, scale
     fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'Actuals':[col[0] for col in ActualScaled]}, columns=["predictions", "Actuals"])
 
     data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
-    plt.plot(data)
-    plt.show()
+    today = str(date.today())
+    os.rename(r"C:\Users\3henr\PycharmProjects\FinanceML\rolling_predictions",
+              r"C:\Users\3henr\PycharmProjects\FinanceML\rolling_predictions" + today)
+    shutil.move(r"C:\Users\3henr\PycharmProjects\FinanceML\rolling_predictions" + today,
+                r"C:\Users\3henr\PycharmProjects\FinanceML\old_pickles\rolling_predictions" + today)
+    pickle_out = open("/rolling_predictions", "wb")
+    pickle.dump(data, pickle_out)
+    pickle_out.close()
 
-X, Y, ActualScaled, PredictScaled, model, scaler= init()
+
+X, Y, ActualScaled, PredictScaled, model, scaler = init()
 
 plot_rolling_predicitons(model, X, ActualScaled, PredictScaled, scaler)
+pickle_in = open("rolling_predictions", "rb")
+data = pickle.load(pickle_in)
+plt.plot(data)
 plt.show()

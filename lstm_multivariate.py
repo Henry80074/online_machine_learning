@@ -58,18 +58,31 @@ def load():
     except IOError:
         return print(("no model found"))
 
+def init():
+    dataframe, new_entries = get_data()
+    dataframe = dataframe.filter(['prices', 'value'])
+    dataframe, scaler = preprocess(dataframe)
+    look_back = 45
+    variables = 2
+    X, Y = create_dataset(dataframe, look_back)
+    model = load()
+    trainPredict = model.predict(X)
+    PredictScaled = scaler.inverse_transform(trainPredict)
+    ActualScaled = scaler.inverse_transform(Y)
+    return X, Y, PredictScaled,ActualScaled, model, scaler
+
 
 def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         model = create_model(look_back, variables)
         # train model
         model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
-            filepath="/tmp/checkpoint",
+            filepath="/FinanceML",
             save_weights_only=True,
             monitor='val_accuracy',
             mode='max',
             save_best_only=True)
-        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=50, callbacks=[model_checkpoint_callback])
-        model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
+        model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=35, callbacks=[model_checkpoint_callback])
+        model.save(r'C:\Users\3henr\PycharmProjects\FinanceML\model')
         return model
 
 

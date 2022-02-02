@@ -38,9 +38,5 @@ df = connect_and_fetch()
 dataframe = df.filter(['prices', 'value'])
 dataframe, scalar = preprocess(dataframe)
 X, Y = create_dataset(dataframe, look_back)
-# train_size, val_size, test_size = split(dataframe)
-# X_train, Y_train = X[:train_size], Y[:train_size]
-# X_val, Y_val = X[train_size: val_size], Y[train_size: val_size]
-# X_test, Y_test = X[val_size:test_size], Y[val_size:test_size]
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
 model = create(look_back, variables, X_train, Y_train, X_test, Y_test)

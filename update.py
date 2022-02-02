@@ -16,13 +16,10 @@ def increment():
     # window -1, and second to last item
     X = df[-47:-2]
     dataX.append([r for r in X])
-    print(dataX)
     label = df[-1]
-    print(label)
     dataY.append(label)
-    model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=35)
-    print("model incremented" + ": " + label + ": " + dataX)
-    #model.save?? how does the application access this newest model?
+    model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=5)
+    model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
 
 
 def update_one():

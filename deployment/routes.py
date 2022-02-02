@@ -14,7 +14,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
-
+from update import increment
 @app.route('/explore')
 def explore():
     return render_template("index.html")
@@ -221,4 +221,10 @@ def update_one():
         # commit to save our changes
         conn.commit()
     conn.close()
+    increment()
     return render_template("data.html", tables=[df3.to_html(classes='data')], titles=df3.columns.values)
+
+@app.route('/increment', methods=['POST', 'GET'])
+def update_mod():
+    increment()
+    return "complete"
