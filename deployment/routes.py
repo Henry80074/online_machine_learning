@@ -5,10 +5,10 @@ import psycopg2
 from flask import flash, render_template, url_for, request, redirect, jsonify
 from deployment import app, model
 import numpy as np
-import matplotlib.pyplot as plt, mpld3
+import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
-from lstm_multivariate import connect_and_fetch, preprocess, create_dataset, get_x_y
+from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 import json
 import plotly
 import plotly.express as px

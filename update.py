@@ -1,13 +1,18 @@
 from datetime import datetime
+import os
 import psycopg2
 from deployment import model
 import numpy as np
 import pandas as pd
 from lstm_multivariate import connect_and_fetch, preprocess
 import requests
+import shutil
+import keras
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def increment():
+    model = keras.models.load_model(ROOT_DIR)
     df = connect_and_fetch()
     df = df.filter(['prices', 'value'])
     df, scalar = preprocess(df)
@@ -18,9 +23,13 @@ def increment():
     dataX.append([r for r in X])
     label = df[-1]
     dataY.append(label)
+    #rename model and move to old directory
+    os.rename(ROOT_DIR + r"\saved_model",
+              ROOT_DIR + r"\saved_model" + today)
+    shutil.move(ROOT_DIR + r"\saved_model" + today,
+                ROOT_DIR + r"\old_models\saved_model" + today)
     model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=5)
-    model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
-
+    model.save(ROOT_DIR)
 
 def update_one():
     # connect to fear/greed api
