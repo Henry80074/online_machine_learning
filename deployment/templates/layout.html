@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Machine Learning Deployment</title>
+    <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="main">
+<header>
+    <nav>
+        <ul class="topnav" id="top_navig_bar">
+            <li><a id="home" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="https://github.com/Henry80074/online_machine_learning">About</a></li>
+            <li><a id="explore" href="{{ url_for('explore') }}">Explore</a></li>
+        </ul>
+    </nav>
+</header>
+{% block content %}
+{% endblock %}
+</body>
+<footer>
+    <p>Henry Booth, 2022</p>
+</footer>
+</html>

@@ -12,9 +12,9 @@ def fetch_model():
     return model
 model = fetch_model()
 
-update_one()
-increment()
-update_rolling_predictions()
+# update_one()
+# increment()
+#update_rolling_predictions()
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.add_job(id="model", func=fetch_model, trigger='interval', days=1)

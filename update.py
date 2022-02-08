@@ -26,9 +26,9 @@ def increment():
     #rename model and move to old directory
     today = datetime.today().strftime('%d-%m-%Y')
     os.rename(ROOT_DIR + r"\saved_model.pb",
-              ROOT_DIR + r"\saved_model" + today)
-    shutil.move(ROOT_DIR + r"\saved_model" + today,
-                ROOT_DIR + r"\old_models")
+              ROOT_DIR + r"\saved_model" + today + ".pb")
+    shutil.move(ROOT_DIR + r"\saved_model" + today  + ".pb",
+                ROOT_DIR + r"\old_models\saved_model" + today  + ".pb")
     model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=5)
     model.save(ROOT_DIR)
 

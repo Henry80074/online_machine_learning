@@ -8,18 +8,13 @@
     <div class="graph">
         <div id='chart' class='chart'></div>
     </div>
-    <div class="graph">
-        <div id='rolling_predict' class='chart'></div>
-    </div>
 </div>
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 <script type='text/javascript'>
   var graphs1 = {{graphJSON | safe}};
   var graphs2 = {{graphJSON2 | safe}};
-  var graphs3 = {{graphJSON3 | safe}};
   Plotly.plot('chart',graphs1,{});
   Plotly.plot('bitcoin_price',graphs2,{});
-  Plotly.plot('rolling_predict',graphs3,{});
 </script>
 </body>
 {% endblock content %}

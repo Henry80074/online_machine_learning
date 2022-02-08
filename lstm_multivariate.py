@@ -148,17 +148,17 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
     data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
     today = str(date.today())
     try:
-        os.rename(ROOT_DIR + r"\rolling_predictions.pkl",
-                  ROOT_DIR + r"\rolling_predictions" + today + ".pkl")
-        shutil.move(ROOT_DIR + r"\rolling_predictions" + today + ".pkl",
+        os.rename(ROOT_DIR + r"\pickles\rolling_predictions.pkl",
+                  ROOT_DIR + r"\pickles\rolling_predictions" + today + ".pkl")
+        shutil.move(ROOT_DIR + r"\pickles\rolling_predictions" + today + ".pkl",
                     ROOT_DIR + r"\old_pickles\rollings_predictions" + today + ".pkl")
     except(FileNotFoundError):
         print("file not found")
         pass
-    if not os.path.isfile(ROOT_DIR + r"\pickles\rolling_predictions.pkl"):
-        with open(ROOT_DIR + r"\pickles\rolling_predictions.pkl", 'wb') as file:
-            pickle.dump(data, file)
-            file.close()
+    with open(ROOT_DIR + r"\pickles\rolling_predictions.pkl", 'wb') as file:
+        pickle.dump(data, file)
+        print("new pickle created")
+        file.close()
 
 # def get_x_y(all_data, new_entries, window):
 #     dataX = []
