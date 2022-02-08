@@ -1,10 +1,9 @@
+from tensorflow import keras
 import keras.models
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.losses import MeanSquaredError
 from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 
 
@@ -14,7 +13,7 @@ def create_model(look_back, variables):
     model.add(LSTM(25, return_sequences=False))
     model.add(keras.layers.Dropout(0.2))
     model.add(Dense(variables))
-    model.compile(optimizer=Adam(learning_rate=0.0001), loss=MeanSquaredError(), metrics="acc")
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001), loss=keras.losses.MeanSquaredError(), metrics="acc")
     return model
 
 

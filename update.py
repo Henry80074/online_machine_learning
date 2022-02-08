@@ -24,10 +24,11 @@ def increment():
     label = df[-1]
     dataY.append(label)
     #rename model and move to old directory
-    os.rename(ROOT_DIR + r"\saved_model",
+    today = datetime.today().strftime('%d-%m-%Y')
+    os.rename(ROOT_DIR + r"\saved_model.pb",
               ROOT_DIR + r"\saved_model" + today)
     shutil.move(ROOT_DIR + r"\saved_model" + today,
-                ROOT_DIR + r"\old_models\saved_model" + today)
+                ROOT_DIR + r"\old_models")
     model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=5)
     model.save(ROOT_DIR)
 
@@ -76,4 +77,3 @@ def update_one():
         # commit to save our changes
         conn.commit()
     conn.close()
-    print("database updated: " + df3)

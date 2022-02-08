@@ -1,15 +1,18 @@
-import os
 import pickle
-import shutil
-from datetime import date
 
-from lstm_multivariate import init, plot_rolling_predicitons
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
-X, Y, ActualScaled, PredictScaled, model, scaler = init()
-plot_rolling_predicitons(model, X, ActualScaled, PredictScaled, scaler)
+from lstm_multivariate import init, plot_rolling_predictions
 
-pickle_in = open("rolling_predictions", "rb")
-data = pickle.load(pickle_in)
-plt.plot(data)
-plt.show()
+def update_rolling_predictions():
+    X, Y, ActualScaled, PredictScaled, model, scaler = init()
+    plot_rolling_predictions(model, X, ActualScaled, PredictScaled, scaler)
+    # pickle_in = open("rolling_predictions", "rb")
+    # data = pickle.load(pickle_in)
+    # plt.plot(data)
+    # plt.show()
+    # return data
+# pickle_in = open(r"C:\Users\3henr\PycharmProjects\FinanceML\pickles\rolling_predictions.pkl", "rb")
+# data = pickle.load(pickle_in)
+# plt.plot(data)
+# plt.show()

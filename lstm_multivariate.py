@@ -5,11 +5,11 @@ import numpy as np
 import os 
 import pickle 
 import shutil
+from tensorflow import keras
 from sklearn.preprocessing import StandardScaler
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
-from keras.optimizers import Adam
 from keras.losses import MeanSquaredError
 import psycopg2
 from datetime import date
@@ -78,7 +78,7 @@ def create_model(look_back, variables):
     model.add(LSTM(25, return_sequences=False))
     model.add(keras.layers.Dropout(0.2))
     model.add(Dense(variables))
-    model.compile(optimizer=Adam(learning_rate=0.0001), loss=MeanSquaredError())
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.0001), loss=MeanSquaredError())
     return model
 
 
@@ -89,6 +89,17 @@ def preprocess(dataset):
     scaled_dataset = scaler.transform(dataset)
     return scaled_dataset, scaler
 
+# #read or create pickle
+# def read_or_new_pickle(path, data):
+#     if os.path.isfile(path):
+#         with open(path, "rb") as f:
+#             try:
+#                 return pickle.load(f)
+#             except Exception: # so many things could go wrong, can't be more specific.
+#                 pass
+#     with open(path, "wb") as f:
+#         pickle.dump(data, f)
+#     return data
 
 # convert an array of values into a dataset matrix
 def create_dataset(dataset, window):
@@ -104,7 +115,7 @@ def create_dataset(dataset, window):
 
 # makes prediction for multiple batch and plots it
 # function to plot future predictions, requires the model, X_values (unscaled),Y values (scaled)
-def plot_rolling_predicitons(model, X_values, ActualScaled, PredictScaled, scaler):
+def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scaler):
     days_to_predict = 14
     predictions_list = []
 
@@ -136,13 +147,18 @@ def plot_rolling_predicitons(model, X_values, ActualScaled, PredictScaled, scale
 
     data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
     today = str(date.today())
-    os.rename(ROOT_DIR + r"\rolling_predictions",
-              ROOT_DIR + r"\rolling_predictions" + today)
-    shutil.move(ROOT_DIR + r"\rolling_predictions" + today,
-                ROOT_DIR + r"\old_pickles\rollings_predictions" + today)
-    pickle_out = open("/rolling_predictions", "wb")
-    pickle.dump(data, pickle_out)
-    pickle_out.close()
+    try:
+        os.rename(ROOT_DIR + r"\rolling_predictions.pkl",
+                  ROOT_DIR + r"\rolling_predictions" + today + ".pkl")
+        shutil.move(ROOT_DIR + r"\rolling_predictions" + today + ".pkl",
+                    ROOT_DIR + r"\old_pickles\rollings_predictions" + today + ".pkl")
+    except(FileNotFoundError):
+        print("file not found")
+        pass
+    if not os.path.isfile(ROOT_DIR + r"\pickles\rolling_predictions.pkl"):
+        with open(ROOT_DIR + r"\pickles\rolling_predictions.pkl", 'wb') as file:
+            pickle.dump(data, file)
+            file.close()
 
 # def get_x_y(all_data, new_entries, window):
 #     dataX = []
