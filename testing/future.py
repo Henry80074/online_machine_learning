@@ -4,7 +4,7 @@ from lstm_multivariate import init, plot_rolling_predictions
 
 
 def update_rolling_predictions():
-    X, Y, PredictScaled, ActualScaled, model, scaler = init()
+    X, Y, PredictScaled, ActualScaled, model, scaler, dates = init()
     plot_rolling_predictions(model, X, ActualScaled, PredictScaled, scaler)
     # pickle_in = open("rolling_predictions", "rb")
     # data = pickle.load(pickle_in)

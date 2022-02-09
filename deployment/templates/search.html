@@ -8,13 +8,15 @@
     <form action="{{ url_for('predict_one')}}"method="post">
     	<input type="text" name="days" placeholder="past days" required="required" />
         <input type="text" name="future" placeholder="prediction window" required="required" />
-        <button type="submit" class="btn btn-primary btn-block btn-large">Show models predictions</button>
+        <button type="submit" class="btn btn-primary btn-block btn-large">Show model predictions</button>
     </form>
    <br>
      <p>This function can be used to explore past prediction accuracy. For example, select 45 for "past days" and 45 for "prediction window" to see predictions from 45 days ago, till today.</p>
+     <br>
      <p>This allows you to explore how accurate the model is when considering past data.</p>
      <br>
      <p>Please note that the model is trained with 45 days prior data to predict the next 1 days price. Therefore the model validity decreases as the window increases.</p>
+     <br>
  </div>
 </body>
 {% endblock content %}

@@ -1,4 +1,5 @@
-from flask import flash, render_template, url_for, request, redirect, jsonify
+import datetime
+from flask import render_template, request
 from deployment import app, model
 import numpy as np
 import pandas as pd
@@ -16,11 +17,12 @@ def explore():
 
 @app.route('/', methods=['GET'])
 def dashboard():
+    today = datetime.datetime.today()
     days = 1
     future_predict = 28
     df = connect_and_fetch()
-    df = df.filter(['prices', 'value'])
-    dataframe, scaler = preprocess(df)
+    dff = df.filter(['prices', 'value'])
+    dataframe, scaler = preprocess(dff)
     # must be same as model dims
     look_back = 45
     X, Y = create_dataset(dataframe, look_back)
@@ -28,8 +30,10 @@ def dashboard():
     # make predictions
     if days == 1:
         last_batch = X[-days:]
+        dates = [today + datetime.timedelta(days=x) for x in range(future_predict)]
     else:
         last_batch = X[-days:-days + 1]
+        dates = [today + datetime.timedelta(days=x-days) for x in range(future_predict)]
     current = last_batch[0]
     results = []
     for i in range(future_predict):
@@ -44,10 +48,11 @@ def dashboard():
 
     if days - future_predict < 0:
         fortune_teller = pd.DataFrame(
-            data={'predictions': [col[0] for col in results]},
-            columns=["predictions"])
+            data={'price': [col[0] for col in results], "date": dates},
+            columns=["price", "date"])
+
         # predictions from certain day in time to X days into the future
-        fig = px.line(fortune_teller, x=[i for i in range(len(fortune_teller))], y="predictions", width=800, height=400,
+        fig = px.line(fortune_teller, x="date", y="price", width=800, height=400,
                       title="%s days projected price" % future_predict)
     else:
         if days - future_predict == 0:
@@ -64,7 +69,7 @@ def dashboard():
                       title="projected price from %s days ago to %s days ago" % (days, days - future_predict))
 
     # bitcoin price chart
-    fig2 = px.line(Y, x=[i for i in range(len(Y))], y=[col[0] for col in Y], width=800, height=400, title="bitcoin price")
+    fig2 = px.line(df, x="date", y="prices", width=800, height=400, title="bitcoin price")
     # rolling price predictions
     pickle_in = open(r"C:\Users\3henr\PycharmProjects\FinanceML\pickles\rolling_predictions.pkl", "rb")
     rolling_predictions_df = pickle.load(pickle_in)
@@ -90,6 +95,7 @@ def predict_one():
     future_predict = form_values[1]
     df = connect_and_fetch()
     df = df.filter(['prices', 'value'])
+    dates = df.filter(['dates'])
     dataframe, scaler = preprocess(df)
     # must be same as model dims
     look_back = 45
@@ -98,6 +104,7 @@ def predict_one():
     # make predictions
     if days == 1:
         last_batch = X[-days:]
+        dates = df.filter(['dates'])
     else:
         last_batch = X[-days:-days+1]
     current = last_batch[0]

@@ -72,8 +72,11 @@ nav li a:hover {
 }
 
 .form-container {
+    height: auto;
+    background: lightblue;
     margin: auto;
-    padding: 5% 10%;
+    margin: 70px auto 10px auto;
+    padding: 20px 20px;
     border-radius: 10px;
     max-width: 400px;
 }
@@ -116,4 +119,14 @@ button {
 
 .dash {
     margin-top: 30px;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    padding: 10px;
+    width: 100%;
+    background: lightblue;
+    margin: auto;
+    text-align: center;
 }

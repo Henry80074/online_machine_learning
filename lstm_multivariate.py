@@ -54,6 +54,7 @@ def load():
 def init():
     dataframe = connect_and_fetch()
     dataframe = dataframe.filter(['prices', 'value'])
+    dates = dataframe.filter(['date'])
     dataframe, scaler = preprocess(dataframe)
     look_back = 45
     variables = 2
@@ -62,7 +63,7 @@ def init():
     trainPredict = model.predict(X)
     PredictScaled = scaler.inverse_transform(trainPredict)
     ActualScaled = scaler.inverse_transform(Y)
-    return X, Y, PredictScaled,ActualScaled, model, scaler
+    return X, Y, PredictScaled,ActualScaled, model, scaler, dates
 
 
 # creates machine learning model 
@@ -192,7 +193,7 @@ def get_all_data():
 
 
 def update_rolling_predictions():
-    X, Y, PredictScaled, ActualScaled, model, scaler = init()
+    X, Y, PredictScaled, ActualScaled, model, scaler, dates = init()
     plot_rolling_predictions(model, X, ActualScaled, PredictScaled, scaler)
 
 
