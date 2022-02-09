@@ -1,23 +1,18 @@
-import sys
-from datetime import datetime
-from sqlalchemy import create_engine
-import psycopg2
 from flask import flash, render_template, url_for, request, redirect, jsonify
 from deployment import app, model
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 import json
 import plotly
 import plotly.express as px
-import plotly.graph_objects as go
-import requests
-from update import increment
+
+
 @app.route('/explore')
 def explore():
     return render_template("search.html")
+
 
 @app.route('/', methods=['GET'])
 def dashboard():
@@ -73,8 +68,8 @@ def dashboard():
     # rolling price predictions
     pickle_in = open(r"C:\Users\3henr\PycharmProjects\FinanceML\pickles\rolling_predictions.pkl", "rb")
     rolling_predictions_df = pickle.load(pickle_in)
-    fig3 = px.line(rolling_predictions_df, x=[i for i in range(len(rolling_predictions_df))], y=rolling_predictions_df.columns, width=800, height=400,
-                  title="Rolling Price Predictions with overlay")
+    fig3 = px.line(rolling_predictions_df, x=[i for i in range(len(rolling_predictions_df))], y=rolling_predictions_df.columns, width=1600, height=400,
+                  title="rolling 14 day price predictions with overlay")
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
     graphJSON3 = json.dumps(fig3, cls=plotly.utils.PlotlyJSONEncoder)
@@ -144,41 +139,7 @@ def predict_one():
     graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
     return render_template("explore.html", graphJSON=graphJSON, graphJSON2=graphJSON2)
 
-@app.route('/get_all_data', methods=['POST', 'GET'])
-def get_all_data():
-    fear_greed_index = requests.get("https://api.alternative.me/fng/?limit=0")
-    fear_greed_index = fear_greed_index.json()
-    timestamp1 = [datetime.fromtimestamp((int(str(x['timestamp'])))).strftime("%d.%m.%y") for x in fear_greed_index['data']]
-    value = [x['value'] for x in fear_greed_index['data']]
-    df1 = pd.DataFrame(data={'date': [col for col in timestamp1], 'value': [col for col in value]},
-                      columns=["date", "value"])
-    # limits amount of data from coin gecko to match fear/greed
-    total_entries = len(df1)
-    bitcoin_market_data = requests.get("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days="+ str(total_entries) +"&interval=daily")
-    # Transform json input to python objects
-    input_dict = bitcoin_market_data.json()
-    # get timestamps and convert to readable time, remove 3 trailing zeros to ensure correct format for conversion
-    timestamp2 = [datetime.fromtimestamp((int(str(x[0])[:-3]))).strftime("%d.%m.%y") for x in input_dict['prices']]
-    prices = [x[1] for x in input_dict['prices']]
-    market_caps = [x[1] for x in input_dict['market_caps']]
-    total_volumes = [x[1] for x in input_dict['total_volumes']]
-    df2 = pd.DataFrame(data={'date': [col for col in timestamp2], 'prices': [col for col in prices],
-                                'total_volumes': [col for col in total_volumes], 'market_cap':[col for col in market_caps]},
-                          columns=["date", "prices", "total_volumes", "market_cap"])
-    df3 = pd.merge(df2, df1,  how="outer", on=["date"])
-    # df2.set_index('date')
-    df3.dropna(subset=["date", "prices", "total_volumes", "market_cap", "value"], inplace=True)
-    # drops last row as this contains the current price of bitcoin
-    # Drop last row
-    df3.drop(index=df3.index[-1],
-            axis=0,
-            inplace=True)
-    conn_string = "postgresql://postgres:***REMOVED***@localhost:5432/online_machine_learning"
-    db = create_engine(conn_string)
-    conn = db.connect()
-    df3.to_sql('bitcoin', con=conn, if_exists='replace', index=False)
 
-    return render_template("data.html", tables=[df3.to_html(classes='data')], titles=df3.columns.values)
 
 
 # @app.route('/update_one', methods=['POST', 'GET'])
