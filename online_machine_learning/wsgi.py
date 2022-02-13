@@ -1,6 +1,7 @@
-from deployment import app
+from deployment import app, db
+from flask.cli import FlaskGroup
 from flask_apscheduler import APScheduler
-from lstm_multivariate import update_rolling_predictions, update_one, increment
+from lstm_multivariate import update_rolling_predictions, update_one, increment, get_all_data
 import os
 import keras
 
@@ -11,11 +12,31 @@ def fetch_model():
     return keras.models.load_model(ROOT_DIR)
 
 
+cli = FlaskGroup(app)
+@cli.command("create_db")
+def create_db():
+    db.drop_all()
+    db.create_all()
+    db.session.commit()
+
+@cli.command("get_data")
+def get_data():
+    get_all_data()
+
+@cli.command("update_one")
+def update_1():
+    update_one()
+    
+@cli.command("increment")
+def train_one():
+    increment()
+    
+@cli.command("update_rolling_predictions")
+def update_predict():
+    update_rolling_predictions()
+    
 model = fetch_model()
 
-# update_one()
-# increment()
-# update_rolling_predictions()
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.add_job(id="model", func=fetch_model, trigger='interval', days=1)
@@ -25,4 +46,4 @@ scheduler.add_job(id="rolling_predict", func=update_rolling_predictions, trigger
 scheduler.start()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    cli()

@@ -8,7 +8,8 @@ from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 import json
 import plotly
 import plotly.express as px
-
+import os
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @app.route('/explore')
 def explore():
@@ -71,7 +72,7 @@ def dashboard():
     # bitcoin price chart
     fig2 = px.line(df, x="date", y="prices", width=800, height=400, title="bitcoin price")
     # rolling price predictions
-    pickle_in = open(r"C:\Users\3henr\PycharmProjects\FinanceML\pickles\rolling_predictions.pkl", "rb")
+    pickle_in = open(ROOT_DIR + "/pickles/rolling_predictions.pkl", "rb")
     rolling_predictions_df = pickle.load(pickle_in)
     fig3 = px.line(rolling_predictions_df, x=[i for i in range(len(rolling_predictions_df))], y=rolling_predictions_df.columns, width=1600, height=400,
                   title="rolling 14 day price predictions with overlay")
@@ -180,7 +181,7 @@ def predict_one():
 #     # connect to the database
 #     conn = psycopg2.connect(user="postgres",
 #                                   ***REMOVED***="***REMOVED***",
-#                                   host="127.0.0.1",
+#                                   host="db",
 #                                   port="5432",
 #                                   database="online_machine_learning")
 #     # create cursor

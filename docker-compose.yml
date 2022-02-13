@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  deployment:
+    build: ./online_machine_learning
+    command: python wsgi.py run -h 0.0.0.0
+    volumes:
+      - ./online_machine_learning/:/app/
+    ports:
+      - 5001:80
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+  db:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=***REMOVED***
+      - POSTGRES_DB=online_machine_learning
+
+volumes:
+  postgres_data:

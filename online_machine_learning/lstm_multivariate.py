@@ -1,6 +1,5 @@
 import keras.models
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 import os 
 import pickle 
@@ -17,8 +16,6 @@ from datetime import datetime
 import psycopg2
 import keras
 
-plt.style.use('fivethirtyeight')
-
 # current directory
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -27,7 +24,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 def connect_and_fetch():
     # establishing the connection
     conn = psycopg2.connect(
-      database="online_machine_learning", user='postgres', ***REMOVED***='***REMOVED***', host='127.0.0.1', port= '5432'
+      database="online_machine_learning", user='postgres', ***REMOVED***='***REMOVED***', host='db', port= '5432'
     )
     sql_query = pd.read_sql_query('''
                                   SELECT
@@ -186,7 +183,7 @@ def get_all_data():
     df3.drop(index=df3.index[-1],
             axis=0,
             inplace=True)
-    conn_string = "postgresql://postgres:***REMOVED***@localhost:5432/online_machine_learning"
+    conn_string = "postgresql://postgres:***REMOVED***@db:5432/online_machine_learning"
     db = create_engine(conn_string)
     conn = db.connect()
     df3.to_sql('bitcoin', con=conn, if_exists='replace', index=False)
@@ -249,7 +246,7 @@ def update_one():
     # connect to the database
     conn = psycopg2.connect(user="postgres",
                                   ***REMOVED***="***REMOVED***",
-                                  host="127.0.0.1",
+                                  host="db",
                                   port="5432",
                                   database="online_machine_learning")
     # create cursor
