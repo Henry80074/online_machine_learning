@@ -15,3 +15,5 @@ def update_rolling_predictions():
 # data = pickle.load(pickle_in)
 # plt.plot(data)
 # plt.show()
+
+update_rolling_predictions()

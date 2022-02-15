@@ -8,7 +8,7 @@ from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 import json
 import plotly
 import plotly.express as px
-
+import plotly.graph_objects as go
 
 @app.route('/explore')
 def explore():
@@ -73,8 +73,20 @@ def dashboard():
     # rolling price predictions
     pickle_in = open(r"C:\Users\3henr\PycharmProjects\FinanceML\pickles\rolling_predictions.pkl", "rb")
     rolling_predictions_df = pickle.load(pickle_in)
-    fig3 = px.line(rolling_predictions_df, x=[i for i in range(len(rolling_predictions_df))], y=rolling_predictions_df.columns, width=1600, height=400,
-                  title="rolling 14 day price predictions with overlay")
+    df_list, fullResults = rolling_predictions_df[0], rolling_predictions_df[1]
+    fig3 = go.Figure()
+    fig3.add_trace(go.Scatter(x=fullResults.date, y=fullResults.actual_price, name="true price",
+                             mode='lines'))
+    fig3.add_trace(go.Scatter(x=fullResults.date, y=fullResults.predictions, mode='lines', name="predicted price",))
+    for df in df_list:
+        fig3.add_trace(go.Scatter(x=df_list[df].date, y=df_list[df].predictions,
+                                 mode='lines'))
+    fig3.update_yaxes(rangemode="nonnegative")
+    fig3.update_layout(
+        title_text="14 day sliding window predictions",
+        autosize=False,
+        width=1600,
+        height=400)
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     graphJSON2 = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
     graphJSON3 = json.dumps(fig3, cls=plotly.utils.PlotlyJSONEncoder)

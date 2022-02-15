@@ -16,7 +16,8 @@ from keras.losses import MeanSquaredError
 from datetime import datetime
 import psycopg2
 import keras
-
+import plotly
+import plotly.graph_objects as go
 plt.style.use('fivethirtyeight')
 
 # current directory
@@ -117,6 +118,15 @@ def create_dataset(dataset, window):
 def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scaler):
     days_to_predict = 14
     predictions_list = []
+    df = connect_and_fetch()
+    lstm_window = 45
+    df = df.filter(['prices', 'value', 'date']).loc[lstm_window:]
+    dates_list = []
+    date_column = df.iloc[:, 2:]
+    for i in range(0, len(date_column), days_to_predict):
+        dates = date_column[i:i+days_to_predict]
+        dates_list.append(dates.values.tolist())
+
     # steps through the dataframe and predicts the number of days forward, from the current batch
     for i in range(0, len(X_values), days_to_predict):
         last_batch = X_values[i:i+1]
@@ -133,16 +143,33 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
             current = np.delete(current, [0], axis=0)
             last_batch = np.array([current])
         # get results as numpy array
-        for i in results:
-            predictions_list.append(i)
-    futurePredict = pd.DataFrame(predictions_list)
-    n = 0
-    price_column = futurePredict.iloc[:, :1]
+        predictions_list.append(results)
+    for i in range(len(dates_list)):
+        for num in range(len(predictions_list[i])):
+            try:
+                predictions_list[i][num].append(dates_list[i][num][0])
+            except IndexError:
+                pass
+    df_list = {}
+    for i in range(len(predictions_list)):
+        batch = predictions_list[i]
+        try:
+            df = pd.DataFrame(data={'predictions': [col[0] for col in batch], 'date':[col[2] for col in batch]}, columns=["predictions", "date"])
+            df_list[i] = df
+        except IndexError:
+            pass
+    fig = go.Figure()
+
+
+    #futurePredict = pd.DataFrame(df_list)
+    #n = 0
+    #price_column = futurePredict.iloc[:, :1]
+
     # fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
     # get predicted and actual price
-    fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'Actuals':[col[0] for col in ActualScaled]}, columns=["predictions", "Actuals"])
+    fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'actual_price':[col[0] for col in ActualScaled], "date": [x[0] for x in date_column.values.tolist()]}, columns=["predictions", "actual_price", "date"])
+    data = [df_list, fullResults]
 
-    data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
     today = datetime.today().strftime('%d-%m-%Y')
     try:
         os.rename(ROOT_DIR + r"\pickles\rolling_predictions.pkl",
@@ -156,6 +183,16 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
         pickle.dump(data, file)
         print("new pickle created")
         file.close()
+
+    df_list, fullResults = data[0], data[1]
+    fig.add_trace(go.Scatter(x=fullResults.date, y=fullResults.actual_price,
+                             mode='lines'))
+    fig.add_trace(go.Scatter(x=fullResults.date, y=fullResults.predictions, mode='lines'))
+    for df in df_list:
+        fig.add_trace(go.Scatter(x=df_list[df].date, y=df_list[df].predictions,
+                                 mode='lines'))
+    fig.update_yaxes(rangemode="nonnegative")
+    fig.show()
 
 
 def get_all_data():

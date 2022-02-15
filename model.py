@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.losses import MeanSquaredError
 
-from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
+from lstm_multivariate import connect_and_fetch, preprocess, create_dataset, get_all_data
 
 
 def create_model(look_back, variables):
@@ -38,6 +38,7 @@ def create(look_back, variables, X_train, Y_train, X_val, Y_val):
 
 look_back = 45
 variables = 2
+get_all_data()
 df = connect_and_fetch()
 dataframe = df.filter(['prices', 'value'])
 dataframe, scalar = preprocess(dataframe)
