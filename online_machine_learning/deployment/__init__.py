@@ -2,11 +2,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from tensorflow import keras
 import os
-
+from lstm_multivariate import run
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__)
 app.config.from_object("deployment.config.Config")
 db = SQLAlchemy(app)
+#run()
 model = keras.models.load_model(ROOT_DIR)
 
 class Bitcoin(db.Model):

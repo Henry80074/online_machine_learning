@@ -8,7 +8,6 @@ from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
 from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.losses import MeanSquaredError
-
 from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
 
 
@@ -35,12 +34,13 @@ def create(look_back, variables, X_train, Y_train, X_val, Y_val):
     model.save(r'C:\Users\3henr\PycharmProjects\FinanceML')
     return model
 
-
-look_back = 45
-variables = 2
-df = connect_and_fetch()
-dataframe = df.filter(['prices', 'value'])
-dataframe, scalar = preprocess(dataframe)
-X, Y = create_dataset(dataframe, look_back)
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
-model = create(look_back, variables, X_train, Y_train, X_test, Y_test)
+def run():
+    look_back = 45
+    variables = 2
+    df = connect_and_fetch()
+    dataframe = df.filter(['prices', 'value'])
+    dataframe, scalar = preprocess(dataframe)
+    X, Y = create_dataset(dataframe, look_back)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
+    model = create(look_back, variables, X_train, Y_train, X_test, Y_test)
+    return model

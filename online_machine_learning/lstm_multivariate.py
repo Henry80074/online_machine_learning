@@ -8,6 +8,7 @@ import requests
 from sqlalchemy import create_engine
 from tensorflow import keras
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
@@ -15,6 +16,12 @@ from keras.losses import MeanSquaredError
 from datetime import datetime
 import psycopg2
 import keras
+from keras.optimizer_v2.adam import Adam
+from tensorflow import keras
+import keras.losses
+import keras.optimizers
+from sklearn.model_selection import train_test_split
+from tensorflow.python.keras.losses import MeanSquaredError
 
 # current directory
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,9 +56,9 @@ def load():
 
 # returns actual and model predictions for model and dataset
 def init():
-    dataframe = connect_and_fetch()
-    dataframe = dataframe.filter(['prices', 'value'])
-    dates = dataframe.filter(['date'])
+    df = connect_and_fetch()
+    dataframe = df.filter(['prices', 'value'])
+    dates = df.filter(['date'])
     dataframe, scaler = preprocess(dataframe)
     look_back = 45
     variables = 2
@@ -114,6 +121,15 @@ def create_dataset(dataset, window):
 def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scaler):
     days_to_predict = 14
     predictions_list = []
+    df = connect_and_fetch()
+    lstm_window = 45
+    df = df.filter(['prices', 'value', 'date']).loc[lstm_window:]
+    dates_list = []
+    date_column = df.iloc[:, 2:]
+    for i in range(0, len(date_column), days_to_predict):
+        dates = date_column[i:i+days_to_predict]
+        dates_list.append(dates.values.tolist())
+
     # steps through the dataframe and predicts the number of days forward, from the current batch
     for i in range(0, len(X_values), days_to_predict):
         last_batch = X_values[i:i+1]
@@ -130,26 +146,38 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
             current = np.delete(current, [0], axis=0)
             last_batch = np.array([current])
         # get results as numpy array
-        for i in results:
-            predictions_list.append(i)
-    futurePredict = pd.DataFrame(predictions_list)
-    n = 0
-    price_column = futurePredict.iloc[:, :1]
-    # fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
+        predictions_list.append(results)
+    for i in range(len(dates_list)):
+        for num in range(len(predictions_list[i])):
+            try:
+                predictions_list[i][num].append(dates_list[i][num][0])
+            except IndexError:
+                pass
+    df_list = {}
+    for i in range(len(predictions_list)):
+        batch = predictions_list[i]
+        try:
+            df = pd.DataFrame(data={'predictions': [col[0] for col in batch], 'date':[col[2] for col in batch]}, columns=["predictions", "date"])
+            df_list[i] = df
+        except IndexError:
+            pass
     # get predicted and actual price
-    fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'Actuals':[col[0] for col in ActualScaled]}, columns=["predictions", "Actuals"])
+    print("predict" + str(len(PredictScaled)))
+    print("actual" + str(len(ActualScaled)))
+    print("date" + str(len(date_column.values.tolist())))
+    fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'actual_price':[col[0] for col in ActualScaled], "date": [x[0] for x in date_column.values.tolist()]}, columns=["predictions", "actual_price", "date"])
+    data = [df_list, fullResults]
 
-    data = pd.merge(fullResults, price_column, how="outer", left_index=True, right_index=True)
     today = datetime.today().strftime('%d-%m-%Y')
     try:
-        os.rename(ROOT_DIR + r"\pickles\rolling_predictions.pkl",
-                  ROOT_DIR + r"\pickles\rolling_predictions" + today + ".pkl")
-        shutil.move(ROOT_DIR + r"\pickles\rolling_predictions" + today + ".pkl",
-                    ROOT_DIR + r"\old_pickles\rollings_predictions" + today + ".pkl")
+        os.rename(ROOT_DIR + "/pickles/rolling_predictions.pkl",
+                  ROOT_DIR + "/pickles/rolling_predictions" + today + ".pkl")
+        shutil.move(ROOT_DIR + "/pickles/rolling_predictions" + today + ".pkl",
+                    ROOT_DIR + "/old_pickles/rollings_predictions" + today + ".pkl")
     except FileNotFoundError:
         print("file not found")
         pass
-    with open(ROOT_DIR + r"\pickles\rolling_predictions.pkl", 'wb') as file:
+    with open(ROOT_DIR + "/pickles/rolling_predictions.pkl", 'wb') as file:
         pickle.dump(data, file)
         print("new pickle created")
         file.close()
@@ -208,10 +236,10 @@ def increment():
     dataY.append(label)
     #rename model and move to old directory
     today = datetime.today().strftime('%d-%m-%Y')
-    os.rename(ROOT_DIR + r"\saved_model.pb",
-              ROOT_DIR + r"\saved_model" + today + ".pb")
-    shutil.move(ROOT_DIR + r"\saved_model" + today  + ".pb",
-                ROOT_DIR + r"\old_models\saved_model" + today  + ".pb")
+    os.rename(ROOT_DIR + "/saved_model.pb",
+              ROOT_DIR + "/saved_model" + today + ".pb")
+    shutil.move(ROOT_DIR + "/saved_model" + today  + ".pb",
+                ROOT_DIR + "/old_models/saved_model" + today  + ".pb")
     model.fit(np.array(dataX), np.array(dataY), batch_size=1, epochs=5)
     model.save(ROOT_DIR)
 
@@ -256,11 +284,45 @@ def update_one():
     cols = ",".join([str(i) for i in df3.columns.tolist()])
     # Insert DataFrame records one by one.
     for i, row in df3.iterrows():
-        sql = "INSERT INTO bitcoin (" + cols + ") VALUES (" + "%s," * (len(row) - 1) + "%s) ON CONFLICT ON CONSTRAINT date DO NOTHING"
+        sql = "INSERT INTO bitcoin (" + cols + ") VALUES (" + "%s," * (len(row) - 1) + "%s)"
         cursor.execute(sql, tuple(row))
         # commit to save our changes
         conn.commit()
     conn.close()
+    
+def create_model(look_back, variables):
+    model = Sequential()
+    model.add(LSTM(8, return_sequences=True, input_shape=(look_back, variables)))
+    model.add(LSTM(25, return_sequences=False))
+    model.add(keras.layers.Dropout(0.2))
+    model.add(Dense(variables))
+    model.compile(optimizer=Adam(learning_rate=0.0001), loss=MeanSquaredError(), metrics="acc")
+    return model
+
+
+def create(look_back, variables, X_train, Y_train, X_val, Y_val):
+    model = create_model(look_back, variables)
+    # train model
+    model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
+        filepath=(ROOT_DIR),
+        save_weights_only=True,
+        monitor='val_loss',
+        mode='max',
+        save_best_only=True)
+    model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=35, callbacks=[model_checkpoint_callback])
+    model.save(ROOT_DIR)
+    return model
+
+def run():
+    look_back = 45
+    variables = 2
+    df = connect_and_fetch()
+    dataframe = df.filter(['prices', 'value'])
+    dataframe, scalar = preprocess(dataframe)
+    X, Y = create_dataset(dataframe, look_back)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=1)
+    model = create(look_back, variables, X_train, Y_train, X_test, Y_test)
+    return model
 
 # OLD FUNCTIONS --------------------------------
 
