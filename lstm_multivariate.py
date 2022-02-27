@@ -158,14 +158,6 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
             df_list[i] = df
         except IndexError:
             pass
-    fig = go.Figure()
-
-
-    #futurePredict = pd.DataFrame(df_list)
-    #n = 0
-    #price_column = futurePredict.iloc[:, :1]
-
-    # fullTrainPredictScaled, fullValPredict, fullTestPredict, fullTrainActual, fullValActual, fullTestActual = init()
     # get predicted and actual price
     fullResults = pd.DataFrame(data={'predictions': [col[0] for col in PredictScaled], 'actual_price':[col[0] for col in ActualScaled], "date": [x[0] for x in date_column.values.tolist()]}, columns=["predictions", "actual_price", "date"])
     data = [df_list, fullResults]
@@ -183,16 +175,6 @@ def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scale
         pickle.dump(data, file)
         print("new pickle created")
         file.close()
-
-    df_list, fullResults = data[0], data[1]
-    fig.add_trace(go.Scatter(x=fullResults.date, y=fullResults.actual_price,
-                             mode='lines'))
-    fig.add_trace(go.Scatter(x=fullResults.date, y=fullResults.predictions, mode='lines'))
-    for df in df_list:
-        fig.add_trace(go.Scatter(x=df_list[df].date, y=df_list[df].predictions,
-                                 mode='lines'))
-    fig.update_yaxes(rangemode="nonnegative")
-    fig.show()
 
 
 def get_all_data():
