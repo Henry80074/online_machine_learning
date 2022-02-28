@@ -4,7 +4,7 @@ from deployment import app, model
 import numpy as np
 import pandas as pd
 import pickle
-from lstm_multivariate import connect_and_fetch, preprocess, create_dataset
+from lstm_multivariate import fetch, preprocess, create_dataset
 import json
 import plotly
 import plotly.express as px
@@ -22,7 +22,7 @@ def dashboard():
     today = datetime.datetime.today()
     days = 1
     future_predict = 28
-    df = connect_and_fetch()
+    df = fetch()
     dff = df.filter(['prices', 'value'])
     dataframe, scaler = preprocess(dff)
     # must be same as model dims
@@ -98,7 +98,7 @@ def dashboard():
 
 @app.route('/view_data')
 def view_database():
-    df = connect_and_fetch()
+    df = fetch()
     return render_template("data.html", tables=[df.to_html(classes='data')], titles=df.columns.values)
 
 

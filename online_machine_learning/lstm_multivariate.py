@@ -13,26 +13,30 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM
 from keras.callbacks import ModelCheckpoint
 from keras.losses import MeanSquaredError
-from datetime import datetime
-import psycopg2
 import keras
+from datetime import datetime
 from keras.optimizer_v2.adam import Adam
 from tensorflow import keras
 import keras.losses
 import keras.optimizers
 from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.losses import MeanSquaredError
-
+import psycopg2
 # current directory
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-
-# connects to database, returns df
-def connect_and_fetch():
-    # establishing the connection
+def connect():
     conn = psycopg2.connect(
-      database="online_machine_learning", user='postgres', ***REMOVED***='***REMOVED***', host='db', port= '5432'
-    )
+        database="online_machine_learning",
+        user='postgres',
+        ***REMOVED***='***REMOVED***',
+        host='localhost',
+        port='5432')
+    return conn
+# connects to database, returns df
+def fetch():
+    # establishing the connection
+    conn = connect()
     sql_query = pd.read_sql_query('''
                                   SELECT
                                   *
@@ -56,7 +60,7 @@ def load():
 
 # returns actual and model predictions for model and dataset
 def init():
-    df = connect_and_fetch()
+    df = fetch()
     dataframe = df.filter(['prices', 'value'])
     dates = df.filter(['date'])
     dataframe, scaler = preprocess(dataframe)
@@ -80,7 +84,7 @@ def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         monitor='val_accuracy',
         mode='max',
         save_best_only=True)
-    model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=35, callbacks=[model_checkpoint_callback])
+    model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=25, callbacks=[model_checkpoint_callback])
     model.save(os.getcwd)
     return model
 
@@ -121,7 +125,7 @@ def create_dataset(dataset, window):
 def plot_rolling_predictions(model, X_values, ActualScaled, PredictScaled, scaler):
     days_to_predict = 14
     predictions_list = []
-    df = connect_and_fetch()
+    df = fetch()
     lstm_window = 45
     df = df.filter(['prices', 'value', 'date']).loc[lstm_window:]
     dates_list = []
@@ -211,7 +215,7 @@ def get_all_data():
     df3.drop(index=df3.index[-1],
             axis=0,
             inplace=True)
-    conn_string = "postgresql://postgres:***REMOVED***@db:5432/online_machine_learning"
+    conn_string = "postgresql://postgres:***REMOVED***@localhost:5432/online_machine_learning"
     db = create_engine(conn_string)
     conn = db.connect()
     df3.to_sql('bitcoin', con=conn, if_exists='replace', index=False)
@@ -224,7 +228,7 @@ def update_rolling_predictions():
 
 def increment():
     model = keras.models.load_model(ROOT_DIR)
-    df = connect_and_fetch()
+    df = fetch()
     df = df.filter(['prices', 'value'])
     df, scalar = preprocess(df)
     dataX = []
@@ -272,11 +276,7 @@ def update_one():
     # merge the dataframes
     df3 = pd.merge(df2, df1, how="outer", on=["date"])
     # connect to the database
-    conn = psycopg2.connect(user="postgres",
-                                  ***REMOVED***="***REMOVED***",
-                                  host="db",
-                                  port="5432",
-                                  database="online_machine_learning")
+    conn = connect()
     # create cursor
     cursor = conn.cursor()
     # post to database
@@ -316,7 +316,7 @@ def create(look_back, variables, X_train, Y_train, X_val, Y_val):
 def run():
     look_back = 45
     variables = 2
-    df = connect_and_fetch()
+    df = fetch()
     dataframe = df.filter(['prices', 'value'])
     dataframe, scalar = preprocess(dataframe)
     X, Y = create_dataset(dataframe, look_back)
