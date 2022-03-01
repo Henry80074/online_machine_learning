@@ -9,8 +9,8 @@ app = Flask(__name__)
 app.config.from_object("deployment.config.Config")
 db = SQLAlchemy(app)
 
-# get_all_data()
-# run()
+get_all_data()
+run()
 model = keras.models.load_model(ROOT_DIR)
 
 

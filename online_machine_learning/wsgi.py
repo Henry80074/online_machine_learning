@@ -50,7 +50,7 @@ scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.add_job(id="model", func=fetch_model, trigger='interval', days=1)
 scheduler.add_job(id="update_one", func=update_one, trigger='interval', days=1)
-scheduler.add_job(id="increment", func=increment, trigger='interval', days=1)
+scheduler.add_job(id="run", func=increment, trigger='interval', days=14)
 scheduler.add_job(id="rolling_predict", func=update_rolling_predictions, trigger='interval', days=1)
 scheduler.start()
 

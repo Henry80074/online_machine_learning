@@ -19,27 +19,17 @@ look_back = 45
 variables = 2
 
 
-# class LSTM_model:
-#     def __init__(self, X, Y, predict_scaled,actual_scaled, model, scaler, dates):
-#         self.X = X
-#         self.Y = Y
-#         self.predict_scaled = predict_scaled
-#         self.actual_scaled = actual_scaled
-#         self.model = model
-#         self.scaler = scaler
-#         self.dates = dates
-# returns actual and model predictions for model and dataset
 def init():
     df = fetch()
     dataframe = df.filter(['prices', 'value'])
     dates = df.filter(['date'])
     dataframe, scalar = preprocess(dataframe)
-    X, Y = create_dataset(dataframe, look_back)
+    x, y = create_dataset(dataframe, look_back)
     model = load()
-    train_predict = model.predict(X)
+    train_predict = model.predict(x)
     predict_scaled = scalar.inverse_transform(train_predict)
-    actual_scaled = scalar.inverse_transform(Y)
-    return X, Y, predict_scaled, actual_scaled, model, scalar, dates
+    actual_scaled = scalar.inverse_transform(y)
+    return x, y, predict_scaled, actual_scaled, model, scalar, dates
 
 
 def load():
@@ -60,7 +50,7 @@ def create(look_back, variables, X_train, Y_train, X_val, Y_val):
         monitor='val_loss',
         mode='max',
         save_best_only=True)
-    model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=5, callbacks=[model_checkpoint_callback])
+    model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=35, callbacks=[model_checkpoint_callback])
     model.save(os.getcwd())
     return model
 
