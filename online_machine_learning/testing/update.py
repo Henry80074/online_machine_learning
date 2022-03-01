@@ -4,7 +4,7 @@ import psycopg2
 from deployment import model
 import numpy as np
 import pandas as pd
-from lstm_multivariate import connect_and_fetch, preprocess
+from ploting import connect_and_fetch, preprocess
 import requests
 import shutil
 import keras

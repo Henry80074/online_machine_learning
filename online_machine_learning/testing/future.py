@@ -1,6 +1,6 @@
 import pickle
 from matplotlib import pyplot as plt
-from lstm_multivariate import init, plot_rolling_predictions
+from ploting import init, plot_rolling_predictions
 
 
 def update_rolling_predictions():

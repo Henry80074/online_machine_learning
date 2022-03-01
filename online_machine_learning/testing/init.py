@@ -1,4 +1,4 @@
-from lstm_multivariate import init
+from ploting import init
 import pandas as pd
 import matplotlib.pyplot as plt
 
